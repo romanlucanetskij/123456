@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 using StudentApi.Data;
 using StudentApi.Dtos;
 using StudentApi.Models;
@@ -11,8 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = builder.Configuration.GetConnectionString("Default") ?? "Data Source=students.db";
-builder.Services.AddSingleton(new StudentRepository(connectionString));
+var connectionString = builder.Configuration.GetConnectionString("Default") ?? string.Empty;
+builder.Services.AddSingleton(new StudentRepository(NormalizeConnectionString(connectionString)));
 
 var app = builder.Build();
 
@@ -21,6 +22,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
@@ -103,4 +107,32 @@ static async Task EnsureDatabaseCreatedAsync(IServiceProvider services)
     using var scope = services.CreateScope();
     var repository = scope.ServiceProvider.GetRequiredService<StudentRepository>();
     await repository.InitializeAsync();
+}
+
+static string NormalizeConnectionString(string connectionString)
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException("Connection string 'Default' must be configured.");
+    }
+
+    if (!connectionString.Contains("=") && connectionString.Contains("://"))
+    {
+        var uri = new Uri(connectionString);
+        var userInfo = uri.UserInfo.Split(':', 2);
+        var builder = new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.IsDefaultPort ? 5432 : uri.Port,
+            Database = uri.AbsolutePath.Trim('/'),
+            Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : string.Empty,
+            Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : string.Empty,
+            SslMode = SslMode.Require,
+            TrustServerCertificate = true
+        };
+
+        return builder.ToString();
+    }
+
+    return connectionString;
 }

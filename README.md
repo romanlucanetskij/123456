@@ -1,6 +1,6 @@
 # Student API
 
-Цей проєкт містить простий REST API для роботи зі списком студентів. API реалізовано на ASP.NET Core Minimal API з використанням Dapper та SQLite.
+Цей проєкт містить простий REST API для роботи зі списком студентів. API реалізовано на ASP.NET Core Minimal API з використанням Dapper та PostgreSQL.
 
 ## Запуск
 
@@ -12,6 +12,9 @@
    dotnet run
    ```
 4. За замовчуванням застосунок стартує на `https://localhost:5001` та `http://localhost:5000`.
+5. Відкрийте у браузері `https://localhost:5001` (або `http://localhost:5000`), щоб скористатися вбудованою XHTML-сторінкою для перевірки API без Postman.
+
+> **Примітка щодо БД.** За замовчуванням використовується підключення до PostgreSQL `romashkadb_shp8` (див. `appsettings.json`). Ви можете перевизначити рядок підключення через змінну оточення `ConnectionStrings__Default`. URI у форматі `postgresql://user:pass@host:port/database` автоматично перетворюється на формат, який розуміє Npgsql.
 
 > **Примітка.** Якщо під час збірки з'являється помилка `project.assets.json not found`, переконайтеся, що попередньо виконано `dotnet restore`. Ця команда створює файл ресурсів з залежностями NuGet.
 
